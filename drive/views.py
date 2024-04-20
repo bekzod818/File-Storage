@@ -1,10 +1,11 @@
 from django.contrib.auth.models import User
-from rest_framework import status
+from rest_framework import generics, status
+from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import File, Sharing
-from .serializers import FileSerializer
+from .serializers import FileSerializer, UserSerializer
 
 
 class FileUploadAPIView(APIView):
@@ -50,3 +51,36 @@ class FileShareAPIView(APIView):
             return Response("File shared successfully", status=status.HTTP_201_CREATED)
         except File.DoesNotExist:
             return Response("File not found", status=status.HTTP_404_NOT_FOUND)
+
+
+class UserRegistrationAPIView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = (
+        UserSerializer  # Assuming you have a serializer for user registration
+    )
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.response import Response
+
+
+class UserLoginAPIView(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
