@@ -2,6 +2,7 @@ django
 djangorestframework
 django-cors-headers
 pre-commit
+drf-spectacular
 autoflake==2.2.0
 black==23.7.0
 pyupgrade==3.10.1
