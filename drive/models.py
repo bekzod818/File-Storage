@@ -42,6 +42,12 @@ class Permission(BaseModel):
     def __str__(self):
         return f"{self.file.name} - {self.permission}"
 
+    class Meta:
+        unique_together = (
+            "file",
+            "user",
+        )  # Ensure unique permission for each user and file
+
 
 class Sharing(BaseModel):
     shared_file = models.ForeignKey(File, on_delete=models.CASCADE)
