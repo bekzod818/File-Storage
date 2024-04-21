@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import File, Group, Sharing
-from .permissions import IsOwnerOrReadOnly
+from .permissions import IsOwnerOrCheckPermission, IsOwnerOrReadOnly
 from .serializers import (
     FileSerializer,
     GroupSerializer,
@@ -36,7 +36,7 @@ class FileListUploadAPIView(APIView):
 class FileRetrieveUpdateDeleteAPIView(APIView):
     permission_classes = (
         IsAuthenticated,
-        IsOwnerOrReadOnly,
+        IsOwnerOrCheckPermission,
     )
     serializer_class = FileSerializer
 
@@ -67,7 +67,7 @@ class FileRetrieveUpdateDeleteAPIView(APIView):
 class FileShareAPIView(APIView):
     permission_classes = (
         IsAuthenticated,
-        IsOwnerOrReadOnly,
+        IsOwnerOrCheckPermission,
     )
     serializer_class = SharingUserSerializer
 
