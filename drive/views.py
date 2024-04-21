@@ -7,9 +7,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import File, Sharing
+from .models import File, Group, Sharing
 from .permissions import IsOwnerOrReadOnly
-from .serializers import FileSerializer, SharingUserSerializer, UserSerializer
+from .serializers import (
+    FileSerializer,
+    GroupSerializer,
+    SharingUserSerializer,
+    UserSerializer,
+)
 
 
 class FileListUploadAPIView(APIView):
@@ -18,7 +23,7 @@ class FileListUploadAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         files = File.objects.filter(owner=request.user)
-        serializer = FileSerializer(files, many=True)
+        serializer = self.serializer_class(files, many=True)
         return Response(serializer.data)
 
     def post(self, request, *args, **kwargs):
@@ -83,6 +88,55 @@ class FileShareAPIView(APIView):
         return Response(
             {"message": f"File shared successfully"}, status=status.HTTP_201_CREATED
         )
+
+
+class GroupListCreateAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = GroupSerializer
+
+    def get(self, request, *args, **kwargs):
+        groups = Group.objects.filter(owner=request.user)
+        serializer = self.serializer_class(groups, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(owner=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class GroupRetrieveUpdateDeleteAPIView(APIView):
+    permission_classes = (
+        IsAuthenticated,
+        IsOwnerOrReadOnly,
+    )
+    serializer_class = GroupSerializer
+
+    def get(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group, pk=group_id)
+        # Check permissions
+        self.check_object_permissions(request, group)
+        serializer = self.serializer_class(group)
+        return Response(serializer.data)
+
+    def put(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group, pk=group_id)
+        # Check permissions
+        self.check_object_permissions(request, group)
+        serializer = self.serializer_class(group, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, group_id, *args, **kwargs):
+        group = get_object_or_404(Group, id=group_id)
+        # Check permissions
+        self.check_object_permissions(request, group)
+        group.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserRegistrationAPIView(generics.CreateAPIView):

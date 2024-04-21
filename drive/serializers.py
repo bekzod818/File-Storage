@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import File, Sharing
+from .models import File, Group, Sharing
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -9,6 +9,28 @@ class FileSerializer(serializers.ModelSerializer):
         model = File
         fields = ("id", "name", "file")
         read_only_fields = ("id",)
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["files"] = FileSerializer(instance.files.all(), many=True).data
+        return data
+
+    def create(self, validated_data):
+        validated_data["files"] = filter(
+            lambda file: file.owner == self.context["request"].user,
+            validated_data.get("files"),
+        )
+        return super().create(validated_data)
+
+    class Meta:
+        model = Group
+        fields = ("id", "name", "files")
+        read_only_fields = ("id",)
+        extra_kwargs = {
+            "files": {"write_only": True},
+        }
 
 
 class UserSerializer(serializers.ModelSerializer):
