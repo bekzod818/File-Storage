@@ -15,4 +15,4 @@ Build a platform for saving, sharing files like as google drive.
             ▪change file.
         ◦Grouping files by its author. (e.g.: Media folder, Important docs, Videos, or anything that author can rename)
 
-### [FILE](https://github.com/bekzod818/File-Storage/blob/main/manage.py)
+### [VIEW FILE](https://github.com/bekzod818/File-Storage/blob/main/manage.py)
