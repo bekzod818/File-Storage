@@ -67,7 +67,7 @@ class FileRetrieveUpdateDeleteAPIView(APIView):
 class FileShareAPIView(APIView):
     permission_classes = (
         IsAuthenticated,
-        IsOwnerOrCheckPermission,
+        IsOwnerOrReadOnly,
     )
     serializer_class = SharingUserSerializer
 
