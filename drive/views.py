@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,7 +10,7 @@ from .serializers import FileSerializer, UserSerializer
 
 
 class FileUploadAPIView(APIView):
-    def post(self, request, format=None):
+    def post(self, request, *args, **kwargs):
         serializer = FileSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(owner=request.user)  # Assign the owner as the current user
@@ -18,7 +19,7 @@ class FileUploadAPIView(APIView):
 
 
 class FileDeleteAPIView(APIView):
-    def delete(self, request, file_id, format=None):
+    def delete(self, request, file_id, *args, **kwargs):
         try:
             file_obj = File.objects.get(id=file_id)
             # Check permissions if needed
@@ -55,23 +56,14 @@ class FileShareAPIView(APIView):
 
 class UserRegistrationAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
-    serializer_class = (
-        UserSerializer  # Assuming you have a serializer for user registration
-    )
+    serializer_class = UserSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-from rest_framework import status
-from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.response import Response
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key}, status=status.HTTP_201_CREATED)
 
 
 class UserLoginAPIView(ObtainAuthToken):
@@ -79,8 +71,7 @@ class UserLoginAPIView(ObtainAuthToken):
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key}, status=status.HTTP_200_OK)
