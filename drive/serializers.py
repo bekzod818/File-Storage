@@ -7,7 +7,8 @@ from .models import File, Sharing
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = "__all__"
+        fields = ("id", "name", "file")
+        read_only_fields = ("id",)
 
 
 class UserSerializer(serializers.ModelSerializer):
